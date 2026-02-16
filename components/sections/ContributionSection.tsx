@@ -226,15 +226,16 @@ export function ContributionSection() {
     return weeks
   }
 
+
   const handlePlaygroundToggle = () => {
-    if (!playgroundMode) {
-      // Entering playground mode
-      signIn('github')
-      setPlaygroundMode(true)
+    if (!session) {
+      signIn('github', {
+        callbackUrl: `${window.location.origin}?playground=true`,
+      })
     } else {
-      // Exiting playground mode
-      signOut()
-      setPlaygroundMode(false)
+      signOut({
+        callbackUrl: window.location.origin,
+      })
     }
   }
 

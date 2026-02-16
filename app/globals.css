@@ -1,0 +1,254 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================
+   BASE THEME VARIABLES
+========================= */
+@layer base {
+  :root {
+    /* Light theme - refined & readable */
+    --background: 43 46% 95%;
+    --foreground: 180 45% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 180 45% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 180 45% 12%;
+
+    /* Primary & secondary */
+    --primary: 180 40% 25%;
+    --primary-foreground: 43 46% 95%;
+
+    --secondary: 43 90% 55%;
+    --secondary-foreground: 180 45% 12%;
+
+    /* Muted & accent */
+    --muted: 43 20% 85%;
+    --muted-foreground: 180 25% 30%;
+
+    --accent: 43 90% 55%;
+    --accent-foreground: 180 45% 12%;
+
+    /* UI */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 43 25% 80%;
+    --input: 0 0% 100%;
+    --ring: 43 90% 55%;
+
+    /* Charts */
+    --chart-1: 43 90% 55%;
+    --chart-2: 180 40% 40%;
+    --chart-3: 200 80% 55%;
+    --chart-4: 160 70% 45%;
+    --chart-5: 30 80% 50%;
+
+    --radius: 0.5rem;
+  }
+
+  /* =========================
+     DARK THEME
+  ========================= */
+  .dark {
+    --background: 180 40% 8%;
+    --foreground: 43 46% 95%;
+
+    --card: 180 30% 12%;
+    --card-foreground: 43 46% 95%;
+
+    --popover: 180 30% 12%;
+    --popover-foreground: 43 46% 95%;
+
+    --primary: 43 100% 65%;
+    --primary-foreground: 180 40% 8%;
+
+    --secondary: 180 20% 20%;
+    --secondary-foreground: 43 46% 95%;
+
+    --muted: 180 10% 30%;
+    --muted-foreground: 43 20% 70%;
+
+    --accent: 43 100% 65%;
+    --accent-foreground: 180 40% 8%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 180 20% 25%;
+    --input: 180 30% 15%;
+    --ring: 43 100% 65%;
+
+    --chart-1: 43 100% 65%;
+    --chart-2: 180 60% 50%;
+    --chart-3: 200 80% 55%;
+    --chart-4: 160 70% 45%;
+    --chart-5: 30 80% 50%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* =========================
+   GLOBAL STYLES
+========================= */
+body {
+  font-family: 'Inter', sans-serif;
+  cursor: none;
+}
+
+/* =========================
+   UTILITIES
+========================= */
+@layer utilities {
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Improved small text readability */
+  .text-small-readable {
+    color: hsl(var(--muted-foreground));
+    font-weight: 500;
+  }
+
+  /* =========================
+     GRID BACKGROUND
+  ========================= */
+  .grid-background {
+    background-image:
+            linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px),
+            linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .dark .grid-background {
+    background-image:
+            linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* =========================
+     BRUSH STROKE EFFECT
+  ========================= */
+  .brush-stroke {
+    position: relative;
+  }
+
+  .brush-stroke::before {
+    content: '';
+    position: absolute;
+    inset: -20px;
+    background: linear-gradient(
+            135deg,
+            hsl(180, 40%, 40%) 0%,
+            hsl(180, 40%, 25%) 100%
+    );
+    clip-path: polygon(
+            15% 5%, 25% 0%, 35% 8%, 45% 3%, 55% 10%, 65% 5%, 75% 12%, 85% 8%, 95% 15%,
+            100% 25%, 98% 35%, 100% 45%, 95% 55%, 100% 65%, 97% 75%, 100% 85%, 95% 95%,
+            85% 92%, 75% 98%, 65% 93%, 55% 97%, 45% 92%, 35% 97%, 25% 93%, 15% 98%,
+            5% 88%, 8% 78%, 3% 68%, 7% 58%, 2% 48%, 6% 38%, 0% 28%, 5% 18%
+    );
+    z-index: -1;
+    opacity: 0.15;
+  }
+
+  .dark .brush-stroke::before {
+    background: linear-gradient(
+            135deg,
+            hsl(43, 100%, 65%) 0%,
+            hsl(43, 100%, 55%) 100%
+    );
+    opacity: 0.1;
+  }
+
+  /* =========================
+     GLOW EFFECTS
+  ========================= */
+  .glow-accent {
+    box-shadow: 0 0 30px hsla(43, 90%, 55%, 0.3);
+  }
+
+  .dark .glow-accent {
+    box-shadow: 0 0 40px hsla(43, 100%, 65%, 0.4);
+  }
+
+  /* =========================
+     ANIMATIONS
+  ========================= */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  @keyframes float-delayed {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+  }
+
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-float-delayed {
+    animation: float-delayed 7s ease-in-out infinite;
+    animation-delay: 1s;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 4s ease-in-out infinite;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.8s ease-out;
+  }
+
+  .code-snippet {
+    color: hsl(var(--muted-foreground));
+    opacity: 0.35;
+    transition: all 0.4s ease;
+  }
+
+  .code-snippet-active {
+    color: hsl(var(--primary));
+    opacity: 0.6;
+  }
+
+  .dark .code-snippet {
+    color: hsl(var(--accent));
+    opacity: 0.3;
+  }
+
+  .dark .code-snippet-active {
+    color: hsl(var(--accent));
+    opacity: 0.5;
+  }
+}

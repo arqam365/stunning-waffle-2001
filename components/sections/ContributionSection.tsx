@@ -51,7 +51,7 @@ export function ContributionSection() {
       setLoading(true)
       setError(null)
 
-      if (playgroundMode && session?.accessToken) {
+      if (playgroundMode && status === 'authenticated'){
         // Playground mode - fetch visitor's data
         await fetchUserData()
       } else {
@@ -227,16 +227,16 @@ export function ContributionSection() {
   }
 
 
-  const handlePlaygroundToggle = () => {
+  const handlePlaygroundToggle = async () => {
     if (!session) {
-      signIn('github', {
+      await signIn('github', {
         callbackUrl: `${window.location.origin}?playground=true`,
       })
-    } else {
-      signOut({
-        callbackUrl: window.location.origin,
-      })
+      return
     }
+
+    // If already logged in → just toggle mode
+    setPlaygroundMode(prev => !prev)
   }
 
   const weeks = groupByWeeks(contributions)

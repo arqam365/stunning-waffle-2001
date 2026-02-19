@@ -1,33 +1,53 @@
 'use client'
 
-import { Mail, Github, Linkedin, MapPin, Send, ArrowRight } from 'lucide-react'
+import { Mail, Github, Linkedin, MapPin, Send, ArrowRight, AlertCircle } from 'lucide-react'
 import { useState, useRef } from 'react'
+import { sendContactEmail } from '@/app/actions/send-contact-email'
 
 export function ContactSection() {
   const [form, setForm] = useState({ name: '', email: '', message: '' })
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [error, setError] = useState<string | null>(null)
   const [focused, setFocused] = useState<string | null>(null)
+  const startTime = useRef<number>(Date.now())
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+    if (error) setError(null) // Clear errors on typing
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.name || !form.email || !form.message) return
-    setStatus('sending')
+    if (!form.name || !form.email || !form.message) {
+      setError('Please fill in all fields')
+      return
+    }
 
-    // Simulate send — replace with your actual endpoint
-    await new Promise(r => setTimeout(r, 1500))
-    setStatus('sent')
-    setForm({ name: '', email: '', message: '' })
-    setTimeout(() => setStatus('idle'), 4000)
+    setStatus('sending')
+    setError(null)
+
+    const elapsed = Date.now() - startTime.current
+    const result = await sendContactEmail(form, { timing: elapsed })
+
+    if (result.success) {
+      setStatus('sent')
+      setForm({ name: '', email: '', message: '' })
+      setTimeout(() => {
+        setStatus('idle')
+        startTime.current = Date.now() // Reset for next submission
+      }, 5000)
+    } else {
+      setStatus('error')
+      setError(result.error || 'Failed to send message')
+      setTimeout(() => setStatus('idle'), 3000)
+    }
   }
 
   const inputBase =
       'w-full bg-transparent border-b text-sm font-mono py-3 pr-3 outline-none transition-all duration-300 placeholder:text-muted-foreground/30 text-foreground'
   const inputIdle   = 'border-border/40'
   const inputFocus  = 'border-accent'
+  const inputError  = 'border-red-400/50'
 
   return (
       <section id="contact" className="relative min-h-screen flex flex-col justify-between overflow-hidden">
@@ -72,12 +92,11 @@ export function ContactSection() {
                       onFocus={() => setFocused('name')}
                       onBlur={() => setFocused(null)}
                       placeholder="Your name"
-                      className={`${inputBase} ${focused === 'name' ? inputFocus : inputIdle}`}
+                      className={`${inputBase} ${error ? inputError : focused === 'name' ? inputFocus : inputIdle}`}
                       disabled={status === 'sending' || status === 'sent'}
                   />
-                  {/* Animated underline */}
                   <span
-                      className="absolute bottom-0 left-0 h-[1px] bg-accent transition-all duration-500"
+                      className={`absolute bottom-0 left-0 h-[1px] transition-all duration-500 ${error ? 'bg-red-400' : 'bg-accent'}`}
                       style={{ width: focused === 'name' ? '100%' : '0%' }}
                   />
                 </div>
@@ -95,11 +114,11 @@ export function ContactSection() {
                       onFocus={() => setFocused('email')}
                       onBlur={() => setFocused(null)}
                       placeholder="your@email.com"
-                      className={`${inputBase} ${focused === 'email' ? inputFocus : inputIdle}`}
+                      className={`${inputBase} ${error ? inputError : focused === 'email' ? inputFocus : inputIdle}`}
                       disabled={status === 'sending' || status === 'sent'}
                   />
                   <span
-                      className="absolute bottom-0 left-0 h-[1px] bg-accent transition-all duration-500"
+                      className={`absolute bottom-0 left-0 h-[1px] transition-all duration-500 ${error ? 'bg-red-400' : 'bg-accent'}`}
                       style={{ width: focused === 'email' ? '100%' : '0%' }}
                   />
                 </div>
@@ -117,14 +136,22 @@ export function ContactSection() {
                       onBlur={() => setFocused(null)}
                       placeholder="Tell me about your project..."
                       rows={4}
-                      className={`${inputBase} resize-none ${focused === 'message' ? inputFocus : inputIdle}`}
+                      className={`${inputBase} resize-none ${error ? inputError : focused === 'message' ? inputFocus : inputIdle}`}
                       disabled={status === 'sending' || status === 'sent'}
                   />
                   <span
-                      className="absolute bottom-0 left-0 h-[1px] bg-accent transition-all duration-500"
+                      className={`absolute bottom-0 left-0 h-[1px] transition-all duration-500 ${error ? 'bg-red-400' : 'bg-accent'}`}
                       style={{ width: focused === 'message' ? '100%' : '0%' }}
                   />
                 </div>
+
+                {/* Error message */}
+                {error && (
+                    <div className="flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-sm animate-fade-in">
+                      <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                      <p className="font-mono text-xs text-red-400 tracking-wide">{error}</p>
+                    </div>
+                )}
 
                 {/* Submit */}
                 <button
@@ -134,11 +161,9 @@ export function ContactSection() {
                   font-mono text-sm text-accent tracking-widest overflow-hidden
                   hover:border-accent transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {/* Fill sweep on hover */}
                   <span className="absolute inset-0 bg-accent translate-x-[-101%] group-hover:translate-x-0 transition-transform duration-500 ease-out" />
-
                   <span className="relative z-10 group-hover:text-background transition-colors duration-300">
-                  {status === 'sending' ? 'SENDING...' : status === 'sent' ? 'MESSAGE SENT ✓' : 'SEND MESSAGE'}
+                  {status === 'sending' ? 'SENDING...' : status === 'sent' ? 'MESSAGE SENT ✓' : status === 'error' ? 'TRY AGAIN' : 'SEND MESSAGE'}
                 </span>
                   {status === 'idle' && (
                       <Send className="relative z-10 w-3.5 h-3.5 group-hover:text-background transition-colors duration-300 group-hover:translate-x-1 group-hover:-translate-y-0.5 transition-transform" />
@@ -150,17 +175,20 @@ export function ContactSection() {
 
                 {/* Sent confirmation */}
                 {status === 'sent' && (
-                    <p className="font-mono text-xs text-accent/60 tracking-wider animate-fade-in">
-                      &gt; Thanks! I'll get back to you soon.
-                    </p>
+                    <div className="space-y-2 animate-fade-in">
+                      <p className="font-mono text-xs text-accent/80 tracking-wider">
+                        &gt; Message sent successfully!
+                      </p>
+                      <p className="font-mono text-xs text-muted-foreground/60 tracking-wide">
+                        Check your email for a confirmation. I'll get back to you soon.
+                      </p>
+                    </div>
                 )}
               </form>
             </div>
 
             {/* ── RIGHT — Contact details ── */}
             <div className="space-y-10 md:pt-24">
-
-              {/* Start a conversation heading */}
               <div>
                 <p className="font-mono text-xs text-muted-foreground/40 tracking-widest mb-3">~/start</p>
                 <h3 className="text-3xl md:text-4xl font-bold leading-tight">
@@ -168,10 +196,7 @@ export function ContactSection() {
                 </h3>
               </div>
 
-              {/* Detail rows */}
               <div className="space-y-8">
-
-                {/* Email */}
                 <a
                     href="mailto:mbilalsheikh2001@gmail.com"
                     className="group flex items-start gap-5 py-4 border-b border-border/20 hover:border-accent/30 transition-colors duration-300"
@@ -188,7 +213,6 @@ export function ContactSection() {
                   <ArrowRight className="w-4 h-4 text-muted-foreground/20 ml-auto self-center group-hover:text-accent group-hover:translate-x-1 transition-all duration-300" />
                 </a>
 
-                {/* LinkedIn */}
                 <a
                     href="https://www.linkedin.com/in/mohammedbilalsheikh/"
                     target="_blank"
@@ -207,7 +231,6 @@ export function ContactSection() {
                   <ArrowRight className="w-4 h-4 text-muted-foreground/20 ml-auto self-center group-hover:text-accent group-hover:translate-x-1 transition-all duration-300" />
                 </a>
 
-                {/* GitHub */}
                 <a
                     href="https://github.com/Bilal2001"
                     target="_blank"
@@ -226,7 +249,6 @@ export function ContactSection() {
                   <ArrowRight className="w-4 h-4 text-muted-foreground/20 ml-auto self-center group-hover:text-accent group-hover:translate-x-1 transition-all duration-300" />
                 </a>
 
-                {/* Location */}
                 <div className="group flex items-start gap-5 py-4 border-b border-border/20">
                   <div className="w-10 h-10 rounded-sm border border-border/40 flex items-center justify-center flex-shrink-0">
                     <MapPin className="w-4 h-4 text-muted-foreground" />
@@ -237,10 +259,8 @@ export function ContactSection() {
                     <p className="text-xs text-muted-foreground/50 mt-0.5">Remote · Open to relocation</p>
                   </div>
                 </div>
-
               </div>
 
-              {/* Availability badge */}
               <div className="flex items-center gap-3 font-mono text-xs text-muted-foreground/50 tracking-wider">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />

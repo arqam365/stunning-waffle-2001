@@ -3,6 +3,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { GridCursorTrail } from "@/components/GridCursorTrail"
 import { SnakeGameHero } from "@/components/ui/SnakeGameHero"
+import { TetrisGameHero } from "@/components/ui/Tetrisgamehero"
+import { PongGameHero } from "@/components/ui/Ponggamehero"
+import { DinoGameHero } from "@/components/ui/Dinogamehero"
+import { GameMenu } from "@/components/ui/GameMenu"
+
+type GameMode = 'menu' | 'snake' | 'tetris' | 'pong' | 'dino' | null
 
 export function HeroSection() {
   const scrollToSection = (sectionId: string) => {
@@ -24,11 +30,10 @@ export function HeroSection() {
   ]
 
   const [activeSnippets, setActiveSnippets] = useState<Set<number>>(new Set())
-  const [gameMode, setGameMode] = useState(false)
+  const [gameMode, setGameMode] = useState<GameMode>(null)
 
-  // Stable refs for callbacks passed to SnakeGameHero — never recreated
-  const handleActivate   = useRef(() => setGameMode(true))
-  const handleDeactivate = useRef(() => setGameMode(false))
+  const handleActivate   = useRef(() => {})
+  const handleDeactivate = useRef(() => setGameMode(null))
 
   useEffect(() => {
     codeSnippets.forEach((_, index) => {
@@ -53,43 +58,97 @@ export function HeroSection() {
     return () => clearInterval(interval)
   }, [])
 
-  // Spacebar to toggle game, Escape to exit
+  // Spacebar opens menu, Escape closes everything
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
+      // Spacebar — open menu or close game
       if (e.key === ' ' || e.code === 'Space') {
         if (document.activeElement?.tagName === 'BUTTON') return
         e.preventDefault()
-        setGameMode(prev => !prev)
+        setGameMode(prev => {
+          if (prev === null) return 'menu'  // Open menu
+          if (prev === 'menu') return null  // Close menu
+          return null  // In game → exit to normal
+        })
       }
+      // Escape — always close
       if (e.key === 'Escape') {
-        setGameMode(false)
+        setGameMode(null)
       }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [])
 
+  // Notify parent layout to hide nav/theme toggle during game
+  useEffect(() => {
+    const isGameActive = gameMode === 'snake' || gameMode === 'tetris' || gameMode === 'pong' || gameMode === 'dino'
+    document.body.setAttribute('data-game-active', isGameActive.toString())
+  }, [gameMode])
+
+  const isGameActive = gameMode === 'snake' || gameMode === 'tetris' || gameMode === 'pong' || gameMode === 'dino'
+  const contentOpacity = isGameActive ? 0.03 : gameMode === 'menu' ? 0.15 : 1
+
   return (
       <section id="systems" className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
         {/* Grid background */}
         <div className="absolute inset-0 grid-background opacity-30" />
 
-        {/* Cursor trail — hidden while game is active */}
-        {!gameMode && <GridCursorTrail containerId="systems" />}
+        {/* Cursor trail — hidden during game, visible in menu */}
+        {!isGameActive && <GridCursorTrail containerId="systems" opacity={gameMode === 'menu' ? 0.3 : 0.7} />}
 
-        {/* Snake game — always mounted, controlled via isActive prop */}
-        <SnakeGameHero
-            containerId="systems"
-            isActive={gameMode}
-            onActivate={handleActivate.current}
-            onDeactivate={handleDeactivate.current}
-        />
+        {/* Game Menu */}
+        {gameMode === 'menu' && (
+            <GameMenu
+                onSelectGame={(game) => setGameMode(game)}
+                onClose={() => setGameMode(null)}
+            />
+        )}
 
-        {/* Decorative background — dimmed during game */}
+        {/* Snake game */}
+        {gameMode === 'snake' && (
+            <SnakeGameHero
+                containerId="systems"
+                isActive={true}
+                onActivate={handleActivate.current}
+                onDeactivate={handleDeactivate.current}
+            />
+        )}
+
+        {/* Tetris game */}
+        {gameMode === 'tetris' && (
+            <TetrisGameHero
+                containerId="systems"
+                isActive={true}
+                onActivate={handleActivate.current}
+                onDeactivate={handleDeactivate.current}
+            />
+        )}
+
+        {/* Pong game */}
+        {gameMode === 'pong' && (
+            <PongGameHero
+                containerId="systems"
+                isActive={true}
+                onActivate={handleActivate.current}
+                onDeactivate={handleDeactivate.current}
+            />
+        )}
+
+        {/* Dino game */}
+        {gameMode === 'dino' && (
+            <DinoGameHero
+                containerId="systems"
+                isActive={true}
+                onActivate={handleActivate.current}
+                onDeactivate={handleDeactivate.current}
+            />
+        )}
+
+        {/* Decorative background — dims based on mode */}
         <div
-            className={`absolute inset-0 overflow-hidden pointer-events-none transition-opacity duration-500 ${
-                gameMode ? 'opacity-20' : 'opacity-100'
-            }`}
+            className="absolute inset-0 overflow-hidden pointer-events-none transition-opacity duration-500"
+            style={{ opacity: contentOpacity }}
         >
           <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl animate-pulse-slow" />
           <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />
@@ -110,7 +169,6 @@ export function HeroSection() {
             ))}
           </div>
 
-          {/* Code snippet grid - Top Right */}
           <div className="absolute top-24 md:top-28 right-4 md:right-12 space-y-2 text-right">
             {codeSnippets.slice(3, 6).map((snippet, i) => (
                 <div
@@ -126,7 +184,6 @@ export function HeroSection() {
             ))}
           </div>
 
-          {/* Code snippet grid - Bottom Left */}
           <div className="absolute bottom-20 md:bottom-24 left-4 md:left-12 space-y-2">
             {codeSnippets.slice(6, 8).map((snippet, i) => (
                 <div
@@ -142,7 +199,6 @@ export function HeroSection() {
             ))}
           </div>
 
-          {/* Code snippet grid - Bottom Right */}
           <div className="absolute bottom-24 md:bottom-32 right-4 md:right-8 space-y-2 text-right">
             <div className="text-xs md:text-sm font-mono text-accent/30 opacity-25 transition-all duration-500 hover:opacity-40">
               <span className="inline-block">scalable.architecture()</span>
@@ -164,11 +220,13 @@ export function HeroSection() {
           </div>
         </div>
 
-        {/* Centered hero content — dims during game */}
+        {/* Centered hero content */}
         <div
-            className={`relative z-10 max-w-5xl mx-auto px-6 md:px-12 text-center transition-all duration-500 ${
-                gameMode ? 'opacity-10 pointer-events-none select-none' : 'opacity-100'
-            }`}
+            className="relative z-10 max-w-5xl mx-auto px-6 md:px-12 text-center transition-all duration-500"
+            style={{
+              opacity: contentOpacity,
+              pointerEvents: gameMode ? 'none' : 'auto',
+            }}
         >
           <div className="animate-fade-in space-y-8">
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-tight">
@@ -205,17 +263,17 @@ export function HeroSection() {
 
             <div className="pt-4">
             <span className="font-mono text-xs text-muted-foreground/30 tracking-widest">
-              press <span className="text-accent/50">[ space ]</span> to play snake
+              press <span className="text-accent/50">[ space ]</span> to open arcade
             </span>
             </div>
           </div>
         </div>
 
-        {/* ESC hint during game */}
-        {gameMode && (
+        {/* Game mode hints */}
+        {isGameActive && (
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 pointer-events-none select-none">
-              <p className="font-mono text-xs text-muted-foreground/30 tracking-widest">
-                <span className="text-accent/40">[ esc ]</span> to exit · <span className="text-accent/40">[ space ]</span> to toggle
+              <p className="font-mono text-xs text-muted-foreground/40 tracking-widest">
+                <span className="text-accent/50">[ esc ]</span> exit · <span className="text-accent/50">[ space ]</span> pause
               </p>
             </div>
         )}

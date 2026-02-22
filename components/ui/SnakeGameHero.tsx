@@ -116,14 +116,11 @@ export function SnakeGameHero({
             const dir     = dirRef.current
             const newHead = { x: snake[0].x + dir.x, y: snake[0].y + dir.y }
 
-            // Wall collision
-            if (newHead.x < 0 || newHead.y < 0 || newHead.x >= c || newHead.y >= r) {
-                stateRef.current = 'dead'
-                highRef.current  = Math.max(highRef.current, scoreRef.current)
-                stopLoop()
-                flush()
-                return
-            }
+            // Wall wrapping (teleport to opposite side)
+            if (newHead.x < 0) newHead.x = c - 1
+            if (newHead.x >= c) newHead.x = 0
+            if (newHead.y < 0) newHead.y = r - 1
+            if (newHead.y >= r) newHead.y = 0
 
             // Self collision
             if (snake.some(p => p.x === newHead.x && p.y === newHead.y)) {
